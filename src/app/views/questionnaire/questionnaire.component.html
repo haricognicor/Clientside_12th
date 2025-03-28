@@ -1,0 +1,58 @@
+<div class="questionnaire-container">
+  <h2>Questionnaire</h2>
+
+  <div *ngIf="loading" class="loading">
+    <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+    <p>Loading questions...</p>
+  </div>
+
+  <div *ngIf="!loading && questions.length === 0" class="no-questions">
+    <p>No questions available at this time.</p>
+  </div>
+
+  <div *ngIf="!loading && questions.length > 0" class="questions-form">
+    <form #questionForm="ngForm">
+      <div *ngFor="let question of questions; let i = index; trackBy: trackByQuestion" class="question-item">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Question {{i + 1}}</mat-label>
+          <textarea 
+            matInput 
+            [ngModel]="question.text" 
+            readonly 
+            rows="3" 
+            name="question_{{i}}"
+          >{{question.text}}</textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Your Answer</mat-label>
+          <textarea 
+            matInput 
+            [(ngModel)]="question.answer" 
+            (ngModelChange)="onAnswerChange()"
+            placeholder="Type your answer here..." 
+            rows="3" 
+            [disabled]="question.readonly || false"
+            name="answer_{{i}}"
+            required
+          ></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="actions">
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="submitAnswers()" 
+          [disabled]="!allAnswered || loading || questionForm.invalid"
+        >
+          {{ loading ? 'Submitting...' : 'Submit Answers' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+</div>

@@ -1,0 +1,135 @@
+<div *ngIf="isClientDataMissing" class="alert alert-warning">
+  <p>Client data is missing. Please log in to access full functionality.</p>
+  <button mat-raised-button color="primary" (click)="router.navigate(['/login'])">Log In</button>
+</div>
+
+<mat-stepper #stepper (selectionChange)="onStepChange($event.selectedIndex)">
+  <!-- Step 1: Draft Contracts -->
+  <mat-step label="Draft Contracts">
+    <h2>Draft Contracts</h2>
+    <div class="table-controls">
+      <input type="text" [(ngModel)]="searchQuery" (input)="filterFiles()" placeholder="Search draft contracts..." />
+      <select [(ngModel)]="sortOrder" (change)="sortFiles()">
+        <option value="desc">Newest First</option>
+        <option value="asc">Oldest First</option>
+      </select>
+    </div>
+    <table class="draft-contracts-table">
+      <thead>
+        <tr>
+          <th>FILE NAME</th>
+          <th>UPLOADED BY</th>
+          <th>DATE</th>
+          <th>STATUS</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let file of filteredDraftFiles">
+          <td>{{ file.name }}</td>
+          <td>{{ file.uploadedBy }}</td>
+          <td>{{ file.date }}</td>
+          <td>{{ file.status }}</td>
+          <td>
+            <button mat-raised-button color="primary" (click)="downloadFile(file)" [disabled]="isClientDataMissing">
+              Download
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredDraftFiles.length === 0 && !draftContractsError">
+          <td colspan="5" class="no-data">No draft contracts available.</td>
+        </tr>
+        <tr *ngIf="draftContractsError">
+          <td colspan="5" class="error">{{ draftContractsError }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="upload-section">
+      <button mat-raised-button color="accent" [disabled]="isClientDataMissing" (click)="fileInput.click()">
+        Upload Draft Contract
+      </button>
+      <input type="file" #fileInput style="display: none" (change)="onFileSelected($event, 0)" />
+    </div>
+  </mat-step>
+
+  <!-- Step 2: Final Contract -->
+  <mat-step label="Final Contract">
+    <h2>Final Contract</h2>
+    <div *ngIf="finalContract">
+      <p>Final contract: {{ finalContract.name }}</p>
+      <button mat-raised-button color="primary" (click)="downloadFile(finalContract)">Download</button>
+    </div>
+    <div *ngIf="!finalContract">
+      <p>No final contract available.</p>
+      <button mat-raised-button color="accent" [disabled]="isClientDataMissing" (click)="fileInput.click()">
+        Upload Final Contract
+      </button>
+      <input type="file" #fileInput style="display: none" (change)="onFileSelected($event, 1)" />
+    </div>
+  </mat-step>
+
+  <!-- Step 3: Invoices -->
+  <mat-step label="Invoices">
+    <h2>Invoices</h2>
+    <div class="table-controls">
+      <input type="text" [(ngModel)]="invoiceSearchQuery" (input)="filterInvoiceFiles()" placeholder="Search invoices..." />
+      <select [(ngModel)]="invoiceSortOrder" (change)="sortInvoiceFiles()">
+        <option value="desc">Newest First</option>
+        <option value="asc">Oldest First</option>
+      </select>
+    </div>
+    <table class="invoices-table">
+      <thead>
+        <tr>
+          <th>FILE NAME</th>
+          <th>UPLOADED BY</th>
+          <th>DATE</th>
+          <th>STATUS</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let invoice of filteredInvoiceFiles">
+          <td>{{ invoice.name }}</td>
+          <td>{{ invoice.uploadedBy }}</td>
+          <td>{{ invoice.date }}</td>
+          <td>{{ invoice.status }}</td>
+          <td>
+            <button mat-raised-button color="primary" (click)="downloadFile(invoice)">Download</button>
+            <button mat-raised-button color="accent" (click)="payInvoice(invoice)" *ngIf="invoice.status === 'Pending'">
+              Pay
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredInvoiceFiles.length === 0">
+          <td colspan="5" class="no-data">No invoices available.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="upload-section">
+      <button mat-raised-button color="accent" [disabled]="isClientDataMissing" (click)="fileInput.click()">
+        Upload Invoice
+      </button>
+      <input type="file" #fileInput style="display: none" (change)="onFileSelected($event, 2)" />
+    </div>
+  </mat-step>
+
+  <!-- Step 4: Payment -->
+  <mat-step label="Payment">
+    <h2>Payment</h2>
+    <div *ngIf="unpaidInvoices.length > 0">
+      <p>You have {{ unpaidInvoices.length }} unpaid invoices.</p>
+      <button mat-raised-button color="primary" (click)="payInvoice(unpaidInvoices[0])">Pay Now</button>
+    </div>
+    <div *ngIf="unpaidInvoices.length === 0">
+      <p>All invoices are paid.</p>
+      <button mat-raised-button color="primary" (click)="completeProcess()">Complete Process</button>
+    </div>
+  </mat-step>
+</mat-stepper>
+
+<div *ngIf="isUploading" class="upload-progress">
+  <p>Uploading {{ fileName }} ({{ fileSize }})</p>
+  <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+  <button mat-raised-button color="warn" (click)="cancelUpload()">Cancel</button>
+</div>
